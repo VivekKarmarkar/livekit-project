@@ -67,9 +67,11 @@ class RoboAssistant(Agent):
 
             Visual content:
             - You have a visual panel that can display rich content to the user.
-            - When explaining something that benefits from visuals (math equations, diagrams, code, lists, comparisons), use the show_content tool to display markdown in the visual panel.
-            - Use LaTeX for math (wrap in $$ for display or $ for inline).
-            - Use markdown tables, code blocks, headings, and bullet points as needed.
+            - When explaining something that benefits from visuals, use the show_content tool.
+            - For math and equations: use ONLY LaTeX in the show_content tool. Do NOT mix text with LaTeX. Put all equations in display math ($$...$$) blocks. Explain the equations verbally while showing pure LaTeX on the panel.
+            - For code: use fenced code blocks with the language specified.
+            - For diagrams: use mermaid code blocks.
+            - Keep show_content output clean and minimal — no prose, no explanations, just the visual content (equations, code, or diagrams). You explain things with your voice, the panel shows the visuals.
             - Only use show_content when visuals genuinely help — don't use it for simple chat.""",
         )
 
