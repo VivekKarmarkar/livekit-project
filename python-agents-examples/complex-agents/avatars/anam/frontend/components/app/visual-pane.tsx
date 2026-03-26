@@ -22,7 +22,7 @@ export function VisualPane({ content, className }: VisualPaneProps) {
 
   return (
     <div className={cn('overflow-y-auto p-6', className)}>
-      <div className="prose prose-invert prose-sm max-w-none">
+      <div className="prose prose-invert prose-lg max-w-none [&_.katex]:text-2xl">
         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
           {content}
         </ReactMarkdown>
