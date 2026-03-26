@@ -21,12 +21,16 @@ export const SessionView = ({
   void appConfig;
   const { room, isConnected } = useSessionContext();
 
-  // Existing visual mode state — UNCHANGED
+  // Existing visual mode state
   const [visualMode, setVisualMode] = useState(false);
   const [visualContent, setVisualContent] = useState('');
 
-  // Blackboard mode (add-on) — uses the SAME visualContent, just renders differently
+  // Blackboard mode
   const [blackboardMode, setBlackboardMode] = useState(false);
+
+  // Slideshow state (add-on) — accumulates all show_content calls as slides
+  const [slides, setSlides] = useState<string[]>([]);
+  const [slideIndex, setSlideIndex] = useState(0);
 
   const viewMode: ViewMode = blackboardMode ? 'blackboard' : visualMode ? 'visual' : 'chill';
 
@@ -37,6 +41,12 @@ export const SessionView = ({
     room.registerRpcMethod('showContent', async (data: RpcInvocationData) => {
       const { content } = JSON.parse(data.payload) as { content: string };
       setVisualContent(content);
+      // Add to slides
+      setSlides((prev) => {
+        const next = [...prev, content];
+        setSlideIndex(next.length - 1);
+        return next;
+      });
       // Only auto-switch to visual if not already on blackboard
       setBlackboardMode((bb) => {
         if (!bb) setVisualMode(true);
@@ -51,6 +61,7 @@ export const SessionView = ({
   }, [room, isConnected]);
 
   const showTwoPane = viewMode === 'visual' || viewMode === 'blackboard';
+  const currentSlide = slides.length > 0 ? slides[slideIndex] : visualContent;
 
   return (
     <section
@@ -99,9 +110,31 @@ export const SessionView = ({
           </div>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {viewMode === 'visual' ? (
-              <VisualPane content={visualContent} className="flex-1" />
+              <VisualPane content={currentSlide} className="flex-1" />
             ) : (
-              <BlackboardPane content={visualContent} className="flex-1" />
+              <BlackboardPane content={currentSlide} className="flex-1" />
+            )}
+            {/* Slide navigation (add-on) */}
+            {slides.length > 1 && (
+              <div className="flex items-center justify-center gap-3 border-t border-slate-800 px-4 py-2">
+                <button
+                  onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
+                  disabled={slideIndex === 0}
+                  className="rounded px-2 py-1 font-mono text-xs text-slate-400 hover:text-white disabled:text-slate-700 transition-colors"
+                >
+                  &larr; prev
+                </button>
+                <span className="font-mono text-xs text-slate-500">
+                  {slideIndex + 1} / {slides.length}
+                </span>
+                <button
+                  onClick={() => setSlideIndex((i) => Math.min(slides.length - 1, i + 1))}
+                  disabled={slideIndex === slides.length - 1}
+                  className="rounded px-2 py-1 font-mono text-xs text-slate-400 hover:text-white disabled:text-slate-700 transition-colors"
+                >
+                  next &rarr;
+                </button>
+              </div>
             )}
           </div>
         </div>
