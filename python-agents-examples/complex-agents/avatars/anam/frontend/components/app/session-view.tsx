@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useSessionContext } from '@livekit/components-react';
+import { useSessionContext, useSessionMessages } from '@livekit/components-react';
 import type { RpcInvocationData } from 'livekit-client';
 import type { AppConfig } from '@/app-config';
 import { AvatarPanel } from '@/components/app/avatar-panel';
@@ -59,6 +59,26 @@ export const SessionView = ({
       room.unregisterRpcMethod('showContent');
     };
   }, [room, isConnected]);
+
+  // Transcript (add-on)
+  const { messages } = useSessionMessages();
+
+  const handleDownloadTranscript = useCallback(() => {
+    if (messages.length === 0) return;
+    const lines = messages.map((msg) => {
+      const time = new Date(msg.timestamp).toLocaleTimeString();
+      const speaker = msg.type === 'userTranscript' ? 'You' : 'Robo';
+      return `[${time}] ${speaker}: ${msg.message}`;
+    });
+    const text = lines.join('\n\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'robo-chat-transcript.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [messages]);
 
   const showTwoPane = viewMode === 'visual' || viewMode === 'blackboard';
   const currentSlide = slides.length > 0 ? slides[slideIndex] : visualContent;
@@ -219,15 +239,32 @@ ${katexStyles}
                   onClick={handleDownload}
                   className="ml-4 rounded-full bg-slate-700 px-3 py-1 font-mono text-xs text-slate-300 hover:bg-slate-600 hover:text-white transition-colors"
                 >
-                  download
+                  slides
+                </button>
+                <button
+                  onClick={handleDownloadTranscript}
+                  disabled={messages.length === 0}
+                  className="rounded-full bg-slate-700 px-3 py-1 font-mono text-xs text-slate-300 hover:bg-slate-600 hover:text-white disabled:text-slate-700 disabled:bg-slate-800 transition-colors"
+                >
+                  transcript
                 </button>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
           <AvatarPanel className="w-full max-w-lg flex-1" />
+          {messages.length > 0 && (
+            <div className="flex justify-center pb-4">
+              <button
+                onClick={handleDownloadTranscript}
+                className="rounded-full bg-slate-700 px-3 py-1 font-mono text-xs text-slate-300 hover:bg-slate-600 hover:text-white transition-colors"
+              >
+                download transcript
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>
