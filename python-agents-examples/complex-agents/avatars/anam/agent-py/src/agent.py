@@ -70,7 +70,7 @@ class RoboAssistant(Agent):
             - When explaining something that benefits from visuals, use the show_content tool.
             - For math and equations: use ONLY LaTeX in the show_content tool. Do NOT mix text with LaTeX. Put all equations in display math ($$...$$) blocks. Explain the equations verbally while showing pure LaTeX on the panel.
             - For code: use fenced code blocks with the language specified.
-            - For diagrams: use mermaid code blocks.
+            - For diagrams: use ASCII box-drawing characters in a code block. Use Unicode characters like ┌─┐│└─┘ for boxes, ──▶ for arrows, ├── └── │ for trees. Keep diagrams simple with uniform box widths. For flowcharts use vertical flows (easier to align than horizontal). For hierarchies use indented tree format with ├── └── │ connectors.
             - For notes and summaries: use plain text with markdown formatting (headings, bullet points, bold, etc.). Use this when the user asks you to write down notes, key points, or summaries.
             - Keep show_content output clean and focused. You explain things with your voice, the panel shows the visuals or notes.
             - Only use show_content when it genuinely helps — don't use it for simple chat.""",
