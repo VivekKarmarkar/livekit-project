@@ -2,16 +2,16 @@
 
 1. Deleting redundant code files (partially done — hedra/lemonslice/tavus removed, kael.imx and 19 example folders remain)
 
-2. Claude Code integration via MCP and Channels
-   - Build Robo as an MCP server with Channel capability that Claude Code spawns as a subprocess
-     - Robo pushes transcribed voice to Claude Code via `notifications/claude/channel` over stdout
-     - Claude Code responds by calling a `speak` tool on the MCP server via stdin
-     - The `speak` tool sends the response text to TTS → user hears it
-     - No Anthropic API call needed — Claude Code IS the brain
-     - STT and TTS are the only external services remaining in the pipeline
-     - Tools: mcp-server-dev plugin (installed), fakechat source as template
-     - Launch: claude --dangerously-load-development-channels server:robo-voice
+2. Session flag compatibility for Robo Voice (local project scope)
+   - Enable `--continue`, `--resume`, and `--name` flags for Claude Code sessions connecting to Robo Voice
+   - Scope: within the livekit-project root folder only
+   - Goal: reconnect to named/previous sessions while keeping voice channel active
 
-3. Polished demo video based on the short and long demo recordings
+3. Session flag compatibility for Robo Voice (global scope)
+   - Enable `--continue`, `--resume`, and `--name` flags for Claude Code sessions connecting to Robo Voice
+   - Scope: any project globally (not just livekit-project)
+   - Goal: use Robo Voice as a voice interface to any Claude Code project session
 
-4. Make project webpage with YouTube demo embeds and add to personal website
+4. Polished demo video based on the short and long demo recordings
+
+5. Make project webpage with YouTube demo embeds and add to personal website
