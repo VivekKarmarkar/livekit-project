@@ -24,14 +24,15 @@ function AppSetup() {
 
 interface AppProps {
   appConfig: AppConfig;
+  agentMode?: string;
 }
 
-export function App({ appConfig }: AppProps) {
+export function App({ appConfig, agentMode }: AppProps) {
   const tokenSource = useMemo(() => {
     return typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string'
       ? getSandboxTokenSource(appConfig)
-      : TokenSource.endpoint('/api/connection-details');
-  }, [appConfig]);
+      : TokenSource.endpoint(`/api/connection-details?mode=${agentMode || 'realtime'}`);
+  }, [appConfig, agentMode]);
 
   const session = useSession(
     tokenSource,

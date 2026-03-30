@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import Annotated
 
 from dotenv import load_dotenv
@@ -99,24 +100,30 @@ class RoboAssistant(Agent):
 server = AgentServer()
 
 
-
-@server.rtc_session(agent_name="Robo-Intake")
-async def intake_agent(ctx: JobContext):
-    # Logging setup
-    # Add any other context you want in all log entries here
-    ctx.log_context_fields = {
-        "room": ctx.room.name,
-    }
-
-    # Join the room and connect to the user before starting avatar/session
+async def start_agent(ctx: JobContext, mode: str):
+    """Shared agent startup logic for both modes."""
+    ctx.log_context_fields = {"room": ctx.room.name}
     await ctx.connect()
 
-    session = AgentSession(
-        llm=openai.realtime.RealtimeModel(voice="coral"),
-    )
+    logger.info(f"Agent mode: {mode}")
 
-    # Metrics collection, to measure pipeline performance
-    # For more information, see https://docs.livekit.io/deploy/observability/data/
+    if mode == "pipeline":
+        from livekit.plugins import deepgram, silero
+        from livekit.plugins.turn_detector.multilingual import MultilingualModel
+
+        session = AgentSession(
+            stt=deepgram.STT(model="nova-3", language="multi"),
+            llm=openai.LLM(model="gpt-4o-mini"),
+            tts=openai.TTS(voice="coral"),
+            vad=silero.VAD.load(),
+            turn_detection=MultilingualModel(),
+            preemptive_generation=True,
+        )
+    else:
+        session = AgentSession(
+            llm=openai.realtime.RealtimeModel(voice="coral"),
+        )
+
     usage_collector = metrics.UsageCollector()
 
     @session.on("metrics_collected")
@@ -130,7 +137,6 @@ async def intake_agent(ctx: JobContext):
 
     ctx.add_shutdown_callback(log_usage)
 
-    # Start the session first, which initializes the voice pipeline and warms up the models
     await session.start(
         agent=RoboAssistant(ctx),
         room=ctx.room,
@@ -146,10 +152,26 @@ async def intake_agent(ctx: JobContext):
         ),
     )
 
-    # Greet the patient and begin intake
     session.generate_reply(
         instructions="Greet the user warmly and ask what they'd like to chat about."
     )
+
+
+@server.rtc_session(agent_name="Robo-Intake")
+async def robo_agent(ctx: JobContext):
+    # Mode from job metadata (set by frontend dispatch), fallback to env var
+    mode = os.environ.get("AGENT_MODE", "realtime").lower()
+    job_meta = ctx.job.metadata
+    logger.info(f"Job metadata: '{job_meta}'")
+    if job_meta:
+        try:
+            meta = json.loads(job_meta)
+            if meta.get("agent_mode"):
+                mode = meta["agent_mode"]
+        except (json.JSONDecodeError, AttributeError):
+            pass
+    logger.info(f"Agent mode: {mode}")
+    await start_agent(ctx, mode)
 
 
 if __name__ == "__main__":
