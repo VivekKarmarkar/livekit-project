@@ -2,7 +2,7 @@
   "mcpServers": {
     "robo-voice": {
       "command": "bun",
-      "args": ["/home/vivekkarmarkar/Python Files/livekit-project/robo-voice-channel/server.ts"]
+      "args": ["/home/vivekkarmarkar/Python Files/livekit-project/robo-voice-channel/server-simple.ts"]
     }
   }
 }
