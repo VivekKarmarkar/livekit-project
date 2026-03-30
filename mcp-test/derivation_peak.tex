@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+
+\title{\textbf{Why Does $\sin(2t) + \sin(5t)$ Have Peaks of Amplitude 2?}}
+\author{Blackboard Derivation}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Step 1: The Sum-to-Product Identity}
+
+We begin with the standard trigonometric identity:
+\[
+\boxed{\sin A + \sin B \;=\; 2\,\cos\!\left(\frac{A-B}{2}\right)\sin\!\left(\frac{A+B}{2}\right)}
+\]
+
+\section*{Step 2: Apply to Our Waves}
+
+Let $A = 2t$ and $B = 5t$. Substituting:
+\begin{align*}
+\sin(2t) + \sin(5t)
+&= 2\,\cos\!\left(\frac{2t - 5t}{2}\right)\sin\!\left(\frac{2t + 5t}{2}\right) \\[8pt]
+&= 2\,\cos\!\left(\frac{-3t}{2}\right)\sin\!\left(\frac{7t}{2}\right) \\[8pt]
+&= 2\,\cos\!\left(\frac{3t}{2}\right)\sin\!\left(\frac{7t}{2}\right)
+\end{align*}
+
+where the last step uses $\cos(-x) = \cos(x)$.
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!50!black, title=Decomposition]
+\[
+\sin(2t) + \sin(5t) = \underbrace{2\,\cos\!\left(\frac{3t}{2}\right)}_{\text{slow envelope}} \cdot \underbrace{\sin\!\left(\frac{7t}{2}\right)}_{\text{fast carrier}}
+\]
+\end{tcolorbox}
+
+\section*{Step 3: Finding the Peak Amplitude}
+
+The maximum of the product form occurs when both factors achieve their extreme values simultaneously:
+\begin{align*}
+\left|\cos\!\left(\frac{3t}{2}\right)\right| &\leq 1 \\[4pt]
+\left|\sin\!\left(\frac{7t}{2}\right)\right| &\leq 1
+\end{align*}
+
+Therefore:
+\[
+\left|2\,\cos\!\left(\frac{3t}{2}\right)\sin\!\left(\frac{7t}{2}\right)\right| \;\leq\; 2 \cdot 1 \cdot 1 \;=\; 2
+\]
+
+The peak of amplitude $\mathbf{2}$ is achieved when:
+\[
+\cos\!\left(\frac{3t}{2}\right) = \pm 1 \quad\text{and}\quad \sin\!\left(\frac{7t}{2}\right) = \pm 1 \quad\text{(with matching signs)}
+\]
+
+\section*{Step 4: When Exactly Does This Happen?}
+
+\begin{align*}
+\cos\!\left(\frac{3t}{2}\right) = 1 &\implies \frac{3t}{2} = 2n\pi \implies t = \frac{4n\pi}{3}, \quad n \in \mathbb{Z} \\[6pt]
+\sin\!\left(\frac{7t}{2}\right) = 1 &\implies \frac{7t}{2} = \frac{\pi}{2} + 2m\pi \implies t = \frac{\pi(4m+1)}{7}, \quad m \in \mathbb{Z}
+\end{align*}
+
+A peak of exactly $+2$ requires both conditions simultaneously:
+\[
+\frac{4n\pi}{3} = \frac{\pi(4m+1)}{7} \implies 28n = 3(4m+1) \implies 28n = 12m + 3
+\]
+
+This is a Diophantine equation. Since $\gcd(28, 12) = 4$ and $4 \nmid 3$, there is \emph{no} integer solution. The amplitude approaches 2 but never exactly reaches it in finite time --- though it gets arbitrarily close.
+
+\begin{tcolorbox}[colback=green!5, colframe=green!50!black, title=Physical Intuition]
+\textbf{Constructive interference:} Both waves crest together $\Rightarrow$ amplitudes add $\Rightarrow$ $1 + 1 = 2$.
+
+\medskip
+
+The bound of $2$ is the \emph{supremum} --- the theoretical maximum that the sum approaches asymptotically as the envelope and carrier nearly align.
+\end{tcolorbox}
+
+\end{document}

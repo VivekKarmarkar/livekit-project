@@ -3,8 +3,7 @@
 1. Deleting redundant code files (partially done — hedra/lemonslice/tavus removed, kael.imx and 19 example folders remain)
 
 2. Claude Code integration via MCP and Channels
-   - Step A: Add visible toggle (isolated vs pipeline mode). Verify pipeline mode (STT+LLM+TTS) works with own API keys (Deepgram + OpenAI LLM + OpenAI TTS)
-   - Step B: Build Robo as an MCP server with Channel capability that Claude Code spawns as a subprocess
+   - Build Robo as an MCP server with Channel capability that Claude Code spawns as a subprocess
      - Robo pushes transcribed voice to Claude Code via `notifications/claude/channel` over stdout
      - Claude Code responds by calling a `speak` tool on the MCP server via stdin
      - The `speak` tool sends the response text to TTS → user hears it

@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Annotated
 
+import aiohttp
 from dotenv import load_dotenv
 from pydantic import Field
 
@@ -97,6 +98,57 @@ class RoboAssistant(Agent):
             raise llm.LLMToolException(f"Failed to show content: {str(e)}")
 
 
+CLAUDE_CODE_BRIDGE_URL = "http://127.0.0.1:7890"
+
+
+class ClaudeCodeAssistant(Agent):
+    """Agent that bridges voice to a live Claude Code session via MCP Channel."""
+
+    def __init__(self, ctx: JobContext) -> None:
+        self._ctx = ctx
+        super().__init__(
+            instructions="You are a voice interface to Claude Code. "
+            "The llm_node handles all communication with Claude Code.",
+        )
+
+    async def llm_node(self, chat_ctx, tools, model_settings=None):
+        """Override the LLM node to bridge to Claude Code via MCP Channel server."""
+
+        async def bridge_stream():
+            # Extract the user's latest message
+            user_text = ""
+            for msg in reversed(chat_ctx.messages()):
+                if msg.role == "user":
+                    user_text = msg.text_content or ""
+                    break
+
+            if not user_text:
+                return
+
+            logger.info(f"Claude Code bridge: sending '{user_text[:60]}'")
+
+            try:
+                async with aiohttp.ClientSession() as http:
+                    async with http.post(
+                        f"{CLAUDE_CODE_BRIDGE_URL}/transcription",
+                        data=user_text,
+                        timeout=aiohttp.ClientTimeout(total=90),
+                    ) as resp:
+                        if resp.status != 200:
+                            yield "Sorry, I couldn't reach Claude Code."
+                            return
+                        response_text = await resp.text()
+
+                logger.info(f"Claude Code bridge: got response '{response_text[:60]}'")
+                yield response_text
+
+            except aiohttp.ClientError as e:
+                logger.error(f"Claude Code bridge error: {e}")
+                yield "I can't connect to Claude Code right now."
+
+        return bridge_stream()
+
+
 server = AgentServer()
 
 
@@ -107,7 +159,22 @@ async def start_agent(ctx: JobContext, mode: str):
 
     logger.info(f"Agent mode: {mode}")
 
-    if mode == "pipeline":
+    if mode == "claude-code":
+        from livekit.plugins import deepgram, silero
+
+        # Claude Code mode: STT + TTS with llm_node bridging to Claude Code
+        # Use VAD turn detection (local, no LiveKit Inference needed)
+        # Generous endpointing delays — Claude Code takes longer to respond
+        session = AgentSession(
+            stt=deepgram.STT(model="nova-3", language="multi"),
+            llm=openai.LLM(model="gpt-4o-mini"),  # placeholder — llm_node overrides this
+            tts=openai.TTS(voice="coral"),
+            vad=silero.VAD.load(),
+            turn_detection="vad",
+            min_endpointing_delay=1.5,
+            max_endpointing_delay=6.0,
+        )
+    elif mode == "pipeline":
         from livekit.plugins import deepgram, silero
         from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
@@ -137,8 +204,10 @@ async def start_agent(ctx: JobContext, mode: str):
 
     ctx.add_shutdown_callback(log_usage)
 
+    agent = ClaudeCodeAssistant(ctx) if mode == "claude-code" else RoboAssistant(ctx)
+
     await session.start(
-        agent=RoboAssistant(ctx),
+        agent=agent,
         room=ctx.room,
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(

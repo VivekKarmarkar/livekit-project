@@ -1,0 +1,184 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\title{\textbf{Peak Amplitude of Summed Sine Waves:\\A Local Envelope Analysis}}
+\author{Blackboard Derivation}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Setup}
+
+Consider the sum of two unit-amplitude sine waves:
+\[
+f(t) = \sin(\omega_1 t) + \sin(\omega_2 t), \qquad \omega_1 < \omega_2.
+\]
+By the sum-to-product identity:
+\[
+\boxed{f(t) = 2\cos(\omega_e\, t)\,\sin(\omega_c\, t)}
+\]
+where $\omega_e = \dfrac{\omega_2 - \omega_1}{2}$ is the \textbf{envelope frequency} (slow) and $\omega_c = \dfrac{\omega_2 + \omega_1}{2}$ is the \textbf{carrier frequency} (fast).
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!50!black]
+\textbf{Goal:} Determine when and how $\|f\|_\infty$ approaches the supremum of $2$.
+\end{tcolorbox}
+
+\section{Local Analysis Near Envelope Peaks}
+
+\subsection{Envelope Peak Locations}
+The envelope $2\cos(\omega_e t)$ achieves its maximum of $2$ at times:
+\[
+t_n^* = \frac{2n\pi}{\omega_e}, \qquad n \in \mathbb{Z}.
+\]
+
+\subsection{Quadratic Approximation}
+Near an envelope peak $t_n^*$, let $\delta = t - t_n^*$. Then:
+\[
+\cos(\omega_e t) = \cos(\omega_e t_n^* + \omega_e \delta) = \cos(2n\pi + \omega_e\delta) = \cos(\omega_e\delta)
+\]
+\[
+\cos(\omega_e \delta) = 1 - \frac{\omega_e^2\,\delta^2}{2} + O(\delta^4)
+\]
+So the envelope near its peak is:
+\[
+2\cos(\omega_e\,t) \approx 2\left(1 - \frac{\omega_e^2\,\delta^2}{2}\right) = 2 - \omega_e^2\,\delta^2
+\]
+
+\subsection{Carrier Phase at Envelope Peaks}
+At $t = t_n^*$, the carrier has phase:
+\[
+\phi_n = \omega_c\,t_n^* = \omega_c \cdot \frac{2n\pi}{\omega_e} = 2n\pi\cdot\frac{\omega_c}{\omega_e}
+\]
+The carrier value is $\sin(\phi_n)$, which achieves $\pm 1$ when $\phi_n \equiv \pm\tfrac{\pi}{2} \pmod{2\pi}$.
+
+\subsection{Best Peak Within a Window}
+In a window $[t_n^* - \Delta t,\; t_n^* + \Delta t]$, the carrier $\sin(\omega_c t)$ completes approximately $\dfrac{\omega_c\,\Delta t}{\pi}$ half-cycles. The carrier achieves $\sin = 1$ at some point $t_n^* + \delta_n^*$ where:
+\[
+\omega_c(t_n^* + \delta_n^*) = \frac{\pi}{2} + 2m\pi \quad\text{for some } m \in \mathbb{Z}
+\]
+
+The minimum possible $|\delta_n^*|$ is the distance from $t_n^*$ to the nearest carrier peak:
+\[
+|\delta_n^*| = \min_{m \in \mathbb{Z}} \left|\frac{\frac{\pi}{2} + 2m\pi}{\omega_c} - t_n^*\right|
+= \frac{1}{\omega_c}\min_{m \in \mathbb{Z}} \left|\frac{\pi}{2} + 2m\pi - \omega_c t_n^*\right|
+\]
+
+\begin{theorem}[Peak Value Formula]
+The peak of $f(t)$ near the $n$-th envelope maximum is:
+\[
+\boxed{f_{\max}^{(n)} \approx 2 - \omega_e^2\,(\delta_n^*)^2}
+\]
+where $\delta_n^*$ is the time offset from the envelope peak to the nearest carrier peak. The gap from the supremum is:
+\[
+\Delta_n = 2 - f_{\max}^{(n)} \approx \omega_e^2\,(\delta_n^*)^2
+\]
+\end{theorem}
+
+\begin{proof}
+At $t = t_n^* + \delta_n^*$, the carrier satisfies $\sin(\omega_c t) = 1$ by construction. The envelope contributes:
+\[
+2\cos(\omega_e(t_n^* + \delta_n^*)) \approx 2\left(1 - \frac{\omega_e^2(\delta_n^*)^2}{2}\right)
+= 2 - \omega_e^2(\delta_n^*)^2
+\]
+Hence $f(t_n^* + \delta_n^*) \approx (2 - \omega_e^2(\delta_n^*)^2) \cdot 1 = 2 - \omega_e^2(\delta_n^*)^2$.
+\end{proof}
+
+\section{The Role of the Frequency Ratio}
+
+The key quantity is $\delta_n^*$, which depends on the \emph{phase alignment} between envelope and carrier. Define:
+\[
+\theta_n = \phi_n \mod 2\pi = \left(2n\pi\cdot\frac{\omega_c}{\omega_e}\right) \mod 2\pi
+\]
+This is the carrier phase at the $n$-th envelope peak. The offset satisfies:
+\[
+|\delta_n^*| = \frac{1}{\omega_c}\,d\!\left(\theta_n,\;\frac{\pi}{2}\right)
+\]
+where $d(\theta, \pi/2)$ is the circular distance from $\theta$ to the nearest value in $\{\pi/2 + k\pi : k \in \mathbb{Z}\}$.
+
+\subsection{Case 1: Rational Frequency Ratio}
+
+\begin{proposition}
+If $\omega_c / \omega_e = p/q \in \mathbb{Q}$ (with $\gcd(p,q)=1$), then the sequence $\{\theta_n\}$ is periodic with period $q$, and only finitely many distinct values of $\delta_n^*$ occur.
+\end{proposition}
+
+\begin{proof}
+$\theta_n = (2n\pi \cdot p/q) \mod 2\pi$. Since $p/q$ is rational, $\theta_{n+q} = \theta_n + 2p\pi \equiv \theta_n \pmod{2\pi}$.
+\end{proof}
+
+\begin{tcolorbox}[colback=red!5, colframe=red!50!black, title=Rational Case]
+The peak values \textbf{cycle} through finitely many values. The supremum of $2$ is \textbf{not achieved} (unless $\theta_n = \pi/2$ for some $n$), and convergence \textbf{does not occur} --- the gap is bounded below by:
+\[
+\Delta_{\min} = \omega_e^2 \cdot \min_{n=1,\ldots,q}\left(\frac{d(\theta_n, \pi/2)}{\omega_c}\right)^2 > 0
+\]
+\end{tcolorbox}
+
+\textbf{Example:} $\omega_1=2, \omega_2=5 \Rightarrow \omega_e=3/2, \omega_c=7/2, \omega_c/\omega_e = 7/3$.\\
+Period $q=3$, so only 3 distinct peak values. Best peak $\approx 1.9577$, gap $\approx 0.0423$.
+
+\subsection{Case 2: Irrational Frequency Ratio}
+
+\begin{theorem}[Equidistribution $\Rightarrow$ Convergence]
+If $\omega_c / \omega_e \notin \mathbb{Q}$, then:
+\[
+\inf_{n \in \mathbb{N}} \Delta_n = 0 \qquad\text{(the supremum of $2$ is asymptotically achieved)}
+\]
+\end{theorem}
+
+\begin{proof}
+By Weyl's equidistribution theorem, since $\omega_c/\omega_e$ is irrational, the sequence
+\[
+\theta_n = \left(2n\pi \cdot \frac{\omega_c}{\omega_e}\right) \mod 2\pi
+\]
+is equidistributed on $[0, 2\pi)$. In particular, $\theta_n$ comes arbitrarily close to $\pi/2$, so:
+\[
+\inf_{n} d(\theta_n, \pi/2) = 0 \implies \inf_n |\delta_n^*| = 0 \implies \inf_n \Delta_n = 0.
+\]
+\end{proof}
+
+\begin{tcolorbox}[colback=green!5, colframe=green!50!black, title=Irrational Case]
+The peak values are \textbf{dense} in some interval $[a, 2)$ and converge to the supremum of $2$. The rate of convergence depends on the \textbf{Diophantine properties} of $\omega_c/\omega_e$:
+\begin{itemize}
+\item \textbf{Badly approximable ratios} (e.g., involving golden ratio): $\Delta_n = O(1/n^2)$
+\item \textbf{Well approximable ratios} (near rationals): convergence can be faster along subsequences
+\end{itemize}
+\end{tcolorbox}
+
+\textbf{Example:} $\omega_1=2, \omega_2=2+\sqrt{2} \Rightarrow \omega_e=\sqrt{2}/2, \omega_c=2+\sqrt{2}/2$.\\
+Ratio $\omega_c/\omega_e = 1 + 2\sqrt{2} \notin \mathbb{Q}$. Peaks converge to $2$.
+
+\section{Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{Rational} $\omega_c/\omega_e$ & \textbf{Irrational} $\omega_c/\omega_e$ \\
+\hline
+Peak values & Finitely many, periodic & Dense in $[a,2)$ \\
+\hline
+Supremum reached? & No (generically) & Asymptotically \\
+\hline
+Gap behavior & $\Delta_{\min} > 0$ (fixed) & $\inf \Delta_n = 0$ \\
+\hline
+Key mechanism & Periodicity of phase & Equidistribution (Weyl) \\
+\hline
+\end{tabular}
+\end{center}
+
+\bigskip
+The peak amplitude formula $f_{\max}^{(n)} \approx 2 - \omega_e^2(\delta_n^*)^2$ unifies both cases: the envelope's quadratic flatness at its peak means only the \emph{phase alignment} $\delta_n^*$ between envelope and carrier determines how close you get to the supremum.
+
+\end{document}
