@@ -1,24 +1,19 @@
 #!/usr/bin/env bun
 /**
- * Robo Voice Simple — MCP server with blocking speak_and_listen tool
+ * Robo Voice Simple — MCP server with listen + speak tools
  *
- * No Channels. No special flags. Just a blocking tool that exchanges text
- * between Claude Code and the LiveKit agent.
+ * No Channels. No special flags. Same turn-mapping as Channels mode.
  *
- * Claude Code spawns this as a subprocess. It bridges between:
- * - Claude Code (via stdio JSON-RPC — standard MCP, no experimental features)
- * - The LiveKit agent (via HTTP on localhost:7890)
+ * Pattern:
+ * 1. Claude calls listen() — blocks until the user speaks
+ * 2. Agent POSTs transcription — listen returns it, HTTP stays open
+ * 3. Claude processes the transcription
+ * 4. Claude calls speak(text) — resolves the open HTTP request
+ * 5. Agent gets the response, sends to TTS
+ * 6. Claude calls listen() again — loop continues
  *
- * Pattern (inspired by VoiceMode's converse tool):
- * 1. Claude Code calls speak_and_listen(text) — tool blocks
- * 2. Server stores the response text, waits for agent
- * 3. Agent POSTs transcribed voice to /transcription
- * 4. Server exchanges: agent gets Claude's text, tool gets user's transcription
- * 5. Agent sends Claude's text to TTS, tool returns transcription to Claude Code
- * 6. Claude Code processes, calls speak_and_listen again — loop continues
- *
- * This is a classic rendezvous/exchanger pattern: whichever side arrives
- * first waits for the other. When both are present, they swap data.
+ * This gives the SAME direct mapping as Channels mode:
+ * the agent's POST for message N gets the response to message N back.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
@@ -30,30 +25,16 @@ import {
 
 const PORT = 7890
 
-// --- Exchanger: two slots, one for each side ---
-// When Claude calls speak_and_listen, it deposits responseText and waits for userText.
-// When the agent POSTs /transcription, it deposits userText and waits for responseText.
-// Whichever arrives first waits. When both present, they swap.
+// --- State: two independent rendezvous points ---
 
-let pendingTool: {
-  responseText: string
-  resolve: (transcription: string) => void
-} | null = null
+// When the agent POSTs a transcription:
+//   - If Claude is already waiting in listen(), deliver immediately
+//   - Otherwise queue it until Claude calls listen()
+// The HTTP request stays open until Claude calls speak().
 
-let pendingHttp: {
-  userText: string
-  resolve: (responseText: string) => void
-} | null = null
-
-function tryExchange(): void {
-  if (pendingTool && pendingHttp) {
-    // Both sides present — swap data
-    pendingHttp.resolve(pendingTool.responseText) // agent gets Claude's response
-    pendingTool.resolve(pendingHttp.userText) // Claude gets user's transcription
-    pendingTool = null
-    pendingHttp = null
-  }
-}
+let pendingListen: ((text: string) => void) | null = null // Claude waiting for transcription
+let pendingHttp: ((text: string) => void) | null = null // Agent waiting for response
+let queuedTranscription: string | null = null // Transcription arrived before listen()
 
 // --- MCP Server — standard tools only, no Channels ---
 const mcp = new Server(
@@ -61,32 +42,40 @@ const mcp = new Server(
   {
     capabilities: {
       tools: {},
-      // No experimental/claude/channel — that's the whole point of simple mode
     },
     instructions:
       'You are connected to a voice agent named Robo. ' +
       'The user talks to you through Robo via speech.\n\n' +
-      'To have a conversation, call the speak_and_listen tool in a loop:\n' +
-      '1. Call speak_and_listen with your message — Robo will speak it aloud\n' +
-      '2. The tool blocks until the user responds via voice\n' +
-      '3. The tool returns the user\'s transcribed speech\n' +
-      '4. Process their response and call speak_and_listen again\n\n' +
-      'Start by calling speak_and_listen with a warm greeting.\n' +
+      'To have a conversation, use listen and speak in a loop:\n' +
+      '1. Call listen — blocks until the user speaks, returns their transcription\n' +
+      '2. Process their message\n' +
+      '3. Call speak with your response — Robo speaks it aloud\n' +
+      '4. Call listen again\n\n' +
+      'Start by calling listen to wait for the user.\n' +
       'Keep responses concise and conversational — they will be spoken aloud via TTS. ' +
       'Avoid markdown formatting, code blocks, and long lists unless the user specifically asks.',
   },
 )
 
-// --- Tool: "speak_and_listen" — blocking voice exchange ---
+// --- Tools: listen + speak ---
 mcp.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
-      name: 'speak_and_listen',
+      name: 'listen',
       description:
-        'Send a spoken response to the voice user and wait for their reply. ' +
-        'The text will be synthesized to speech. The tool blocks until the user ' +
-        'responds via voice, then returns their transcribed speech. ' +
-        'Call this in a loop to maintain a conversation.',
+        'Wait for the voice user to speak. Blocks until they say something, ' +
+        'then returns their transcribed speech. Call this before speak.',
+      inputSchema: {
+        type: 'object' as const,
+        properties: {},
+      },
+    },
+    {
+      name: 'speak',
+      description:
+        'Send a spoken response to the voice user. The text will be synthesized ' +
+        'to speech and played through their speaker. Call this after processing ' +
+        'what listen returned.',
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -102,36 +91,57 @@ mcp.setRequestHandler(ListToolsRequestSchema, async () => ({
 }))
 
 mcp.setRequestHandler(CallToolRequestSchema, async (req) => {
-  if (req.params.name === 'speak_and_listen') {
-    const { text } = req.params.arguments as { text: string }
+  if (req.params.name === 'listen') {
+    process.stderr.write('[robo-voice] listen called — waiting for voice input\n')
 
-    process.stderr.write(
-      `[robo-voice] speak_and_listen called: "${text.slice(0, 60)}..."\n`
-    )
-
-    // Deposit our side and wait for the agent
     const transcription = await new Promise<string>((resolve) => {
-      pendingTool = { responseText: text, resolve }
+      // Check if a transcription is already queued
+      if (queuedTranscription) {
+        const text = queuedTranscription
+        queuedTranscription = null
+        resolve(text)
+        return
+      }
 
-      // Timeout after 120 seconds (generous — user might take a while to respond)
+      // Wait for agent to POST
+      pendingListen = resolve
+
+      // Timeout after 120 seconds
       setTimeout(() => {
-        if (pendingTool?.resolve === resolve) {
-          pendingTool = null
-          resolve('[No response — timed out waiting for voice input]')
+        if (pendingListen === resolve) {
+          pendingListen = null
+          resolve('[No voice input — timed out after 120 seconds]')
         }
       }, 120_000)
-
-      // Check if agent is already waiting
-      tryExchange()
     })
 
     process.stderr.write(
-      `[robo-voice] got transcription: "${transcription.slice(0, 60)}"\n`
+      `[robo-voice] listen got: "${transcription.slice(0, 60)}"\n`
     )
 
     return {
       content: [{ type: 'text' as const, text: transcription }],
     }
+  }
+
+  if (req.params.name === 'speak') {
+    const { text } = req.params.arguments as { text: string }
+
+    process.stderr.write(
+      `[robo-voice] speak called: "${text.slice(0, 60)}"\n`
+    )
+
+    // Resolve the pending HTTP request from the agent
+    if (pendingHttp) {
+      pendingHttp(text)
+      pendingHttp = null
+    } else {
+      process.stderr.write(
+        '[robo-voice] speak called with no pending HTTP request\n'
+      )
+    }
+
+    return { content: [{ type: 'text' as const, text: 'spoken' }] }
   }
 
   throw new Error(`unknown tool: ${req.params.name}`)
@@ -169,20 +179,26 @@ Bun.serve({
         `[robo-voice] transcription received: "${userText.slice(0, 60)}"\n`
       )
 
-      // Deposit our side and wait for Claude's response
+      // Deliver transcription to Claude's listen() call
+      if (pendingListen) {
+        pendingListen(userText)
+        pendingListen = null
+      } else {
+        // Claude hasn't called listen() yet — queue it
+        queuedTranscription = userText
+      }
+
+      // Now block until Claude calls speak() with the response
       const responseText = await new Promise<string>((resolve) => {
-        pendingHttp = { userText, resolve }
+        pendingHttp = resolve
 
         // Timeout after 120 seconds
         setTimeout(() => {
-          if (pendingHttp?.resolve === resolve) {
+          if (pendingHttp === resolve) {
             pendingHttp = null
             resolve('[No response from Claude Code — timed out]')
           }
         }, 120_000)
-
-        // Check if Claude is already waiting
-        tryExchange()
       })
 
       process.stderr.write(
