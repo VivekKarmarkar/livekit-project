@@ -1,0 +1,71 @@
+[3:00:11 PM] Robo: Hey there! It's great to connect with you. What’s on your mind today? Are you looking to chat about something fun, or is there something specific you'd like to talk about?
+
+[3:00:32 PM] You: Yeah, so can you write down the differential equation for a damped harmonic oscillator?
+
+[3:00:33 PM] Robo: Here’s the differential equation for a damped harmonic oscillator: mass times the second derivative of displacement, plus the damping coefficient times the first derivative of displacement, plus the spring constant times displacement equals zero. That’s the standard form. We’ve got it shown on the panel for you to reference.
+
+[3:01:08 PM] You: Great, now I'm looking into, you know, computational methods to solve it. Can you write some Python code to solve this differential equation and, you know, try to use NumPy and SciPy and like, you know, the new libraries out there so that...
+
+[3:01:16 PM] You: I get a sense of the modern computational tools.
+
+[3:01:19 PM] Robo: Here’s a Python example using NumPy, SciPy, and Matplotlib to solve the damped harmonic oscillator equation. You can adjust the parameters, initial conditions, and time span as needed. This will give you a visual representation of the displacement and velocity over time.
+
+[3:01:48 PM] You: Okay, that's great. Now I've heard that Julia is really great for scientific computing. Can you show me how we can solve this problem in Julia?
+
+[3:01:51 PM] Robo: Here’s a Julia example using the DifferentialEquations.jl package and Plots to solve the damped harmonic oscillator. Julia is indeed popular for scientific computing and this code shows how to set up and solve the same type of problem efficiently.
+
+[3:02:22 PM] You: Wow, this looks really great. So it looks like you just had this function where you're sort of defining the differential equation based on parameters, and it also looks like you've taken this
+
+[3:02:40 PM] You: second-order ODE, and you've cast it as a linear dynamical system, and then you're simply defining your ODE problem and you're just saying solve, it looks pretty clean to me. It looks like doing math and physics, but with some code.
+
+[3:02:40 PM] Robo: Exactly! That’s one of the beautiful things about Julia and similar modern computational tools. You can express the math in a really clean, intuitive way. You’re basically describing the equations as they are, and then letting the solver handle the rest. It’s like a perfect blend of math and coding.
+
+[3:03:16 PM] You: OK, so maybe, like, how about sketch like a quick systems diagram of, you know, how this Julia code works? Like, what are the inputs, what are the outputs, what do we need? Can you draw like a quick diagram for me?
+
+[3:03:21 PM] Robo: There you go! That’s a quick diagram showing the flow: your inputs are the parameters, initial conditions, and time span. Then you define the ODE function, set up the problem, solve it, and finally get the time, displacement, and velocity outputs, which you can plot. That’s the overall structure.
+
+[3:04:10 PM] You: Wow, that's really clean. So it's it's really like doing math and physics, right? You sort of set up, like, here's my differential equation, but it's parameterized. Here are the parameters, here is where I start. Here is the domain I am looking at. And once you have that, you need to sort of write out your differential equations. We're casting it into a linear dynamical system. And then you're just setting up this ODE problem in Julia and you're literally solving it, getting the outputs and plotting it. It it looks so clean to me.
+
+[3:04:11 PM] Robo: Absolutely! That’s the beauty of it. It’s like having a conversation with the mathematics, where you define the system clearly, plug in your parameters, and let the solver do the heavy lifting. And in the end, you get these neat, insightful plots. It’s a really powerful and elegant approach, especially for exploring dynamical systems.
+
+[3:04:50 PM] You: Okay, now, one thing, we went from the second order differential equation to this linear dynamical system. Let's just go through the derivation quickly, step by step. So let's start by writing out our second order ODE.
+
+[3:04:52 PM] Robo: So we start with the second-order differential equation: mass times the second derivative of x plus the damping coefficient times the first derivative of x plus the spring constant times x equals zero. That’s our starting point.
+
+[3:05:12 PM] You: Okay, what's just the very next step?
+
+[3:05:12 PM] Robo: The very next step is to introduce new variables to convert this second-order equation into a system of first-order equations. We usually define a variable for the displacement and another one for the velocity. That way, we break it down into a system of first-order equations.
+
+[3:05:35 PM] You: Can you show the step? Maybe let's do the new variable introduction.
+
+[3:05:38 PM] Robo: We introduced the new variables: let x₁ be the displacement x, and x₂ be the velocity, which is the first derivative of x. Then we have two first-order equations: the derivative of x₁ is x₂, and the derivative of x₂ is the negative of the damping term over mass times x₂, minus the spring constant over mass times x₁. That’s how we break it down into a linear dynamical system.
+
+[3:07:06 PM] Robo: Yes, exactly! You’ve got it. By introducing the displacement as one variable and the velocity as the second variable, you’ve turned the second-order ODE into a system of first-order equations. And now everything is expressed neatly in terms of x₁ and x₂. The acceleration equation becomes a linear combination of those variables, and that’s how you form the linear dynamical system. It’s all interconnected, with each equation giving you the time evolution of each variable. That’s the core idea.
+
+[3:07:06 PM] You: Oh, you're saying, so the, like, you're saying that the first new variable x1 is just your displacement x. The second is gonna be your velocity, which means if I do dx1 by dt, I'm gonna get x2, and then dx2 by dt is gonna be your acceleration, right? That's gonna be d2x dt squared. And okay, and then you said, you basically divided by, you divided the ODE by mass, and then you're saying that, you know, your acceleration is going to be minus c by m times the velocity, and then that's your damping term. And then your second k by m, x1 is basically your Hooke's law term, the one that comes from the spring force. And then if you look at these two equations together, you're getting a linear dynamical system, right? Because on the left-hand side, like you have dx1 by dt, and then you have a dx2 by dt, and everything is cast in terms of x1 and x2. Is that correct?
+
+[3:08:12 PM] You: Okay, nice, but can you, like, can we sort of like, I don't know, write this in like matrix form or it like, I think there's a step from here to what you showed me in Julia, so maybe just a cleaner write-up of these equations or just, um, yeah, maybe we just write dx1 by dt equal to x2 and dx2 by dt is just equal to the minus C by m x2 minus k by m x1. So maybe we strip out all the then and the also, just have the clean set of the two equations, right?
+
+[3:08:13 PM] You: On the next slide, maybe.
+
+[3:08:16 PM] Robo: Here’s that clean set of equations: the time derivative of x₁ is x₂, and the time derivative of x₂ is negative c over m times x₂ minus k over m times x₁. This is the system in its simplest form, and from here it’s easy to move to the matrix form or code implementation.
+
+[3:08:37 PM] You: Yeah, and...
+
+[3:09:33 PM] You: That's right, and now the beautiful thing is, we have slides where it's a slideshow, so I can actually go back and let me look at the place where you had the Julia code. So I see, so we have a, you know, you got your u, we have x and v is equal to u, and it looks like your du1, it looks like the The differential equations are being captured in du and du has two entries, one and two. So du1 is V and du2 is minus c by m into V minus k by m into x. So this du thing, this is capturing my two differential equations. There's a one and two index. And I think that is exactly what we derived and discussed. And this slideshow that we have makes it very easy for me to go back and forth and check things.
+
+[3:09:35 PM] You: So let me just make sure that, yes.
+
+[3:09:42 PM] You: So we have the du1 corresponds to that first differential equation, and du2 corresponds to the second one.
+
+[3:10:04 PM] You: Yeah, I think it's great. I have a sense of sort of how to get started with Julia to solve this classic differential equation in physics and applied math and even engineering, right? So, I think it was a good example. Why don't you make some notes in just plain English about the things we discussed, what I learned today?
+
+[3:10:18 PM] Robo: Oops, it looks like I ran into a little hiccup trying to display those notes. Let me summarize them for you clearly here:
+
+[3:10:29 PM] You: Yeah, try again. Can you maybe just...
+
+[3:10:35 PM] You: Go and, or, or, yeah, can you try to write the notes again, or can you hear me?
+
+[3:10:40 PM] Robo: It looks like we're having some trouble displaying the notes right
+
+[3:11:08 PM] You: I think, I think, yeah, that's fine. It's possible that I've basically run out of my free plan for LiveKit and I'm actually doing a demo showcasing you. So it's also fun to show that you run into all sorts of problems when you're building applied AI systems. So it's great to actually encounter a bug and show it. I think it makes for a good demo because
