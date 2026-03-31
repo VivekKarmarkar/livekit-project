@@ -1,12 +1,9 @@
 # Next Steps
 
-1. Deleting redundant code files (partially done — hedra/lemonslice/tavus removed, kael.imx and 19 example folders remain)
+1. Raw demo video showcasing robo-voice connecting to a live Claude Code session
 
-2. Session flag compatibility for Robo Voice (global scope)
-   - Enable `--continue`, `--resume`, and `--name` flags for Claude Code sessions connecting to Robo Voice
-   - Scope: any project globally (not just livekit-project)
-   - Goal: use Robo Voice as a voice interface to any Claude Code project session
+2. Polished demo video based on the short, long, claude code live demo recordings
 
-3. Polished demo video based on the short and long demo recordings
+3. Make project webpage with YouTube demo embeds, diagrams showcasing core concepts based on reflection PDF/PPTs and add to personal website
 
-4. Make project webpage with YouTube demo embeds and add to personal website
+4. Deleting redundant code files (partially done — hedra/lemonslice/tavus removed, kael.imx and 19 example folders remain)
